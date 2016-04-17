@@ -43,8 +43,8 @@ class User(ndb.Model):
 
 class Game(ndb.Model):
     """Game object"""
-    secret = ndb.StringProperty(required=True)
-    lettersguessed = ndb.StringProperty(required=True, default='')
+    word_to_guess = ndb.StringProperty(required=True)
+    letters_guessed = ndb.StringProperty(required=True, default='')
     attempts_allowed = ndb.IntegerProperty(required=True, default=9)
     attempts_remaining = ndb.IntegerProperty(required=True, default=9)
     game_over = ndb.BooleanProperty(required=True, default=False)
@@ -56,7 +56,7 @@ class Game(ndb.Model):
         """Returns a GameForm representation of the Game"""
 	return GameForm(urlsafe_key=self.key.urlsafe(),
 			user_name = self.user.get().name,
-			lettersguessed = self.lettersguessed,
+			letters_guessed = self.letters_guessed,
 			attempts_remaining = self.attempts_remaining,
 			game_over = self.game_over,
 			message = message)
@@ -96,7 +96,7 @@ class GameForm(messages.Message):
     game_over = messages.BooleanField(3, required=True)
     message = messages.StringField(4, required=True)
     user_name = messages.StringField(5, required=True)
-    lettersguessed = messages.StringField(6, required=True)
+    letters_guessed = messages.StringField(6, required=True)
 
 class GameForms(messages.Message):
     """Return multiple game forms"""
