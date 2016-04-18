@@ -160,4 +160,5 @@ given time. Each game can be retrieved or played by using the path parameter
 ##Api Test Instruction
 The endpoints function are tested using Api Explorer by visiting http://hangman-1278.appspot.com/_ah/api/explorer. The Backend Apis are:
 ![1](https://lh5.googleusercontent.com/-uy8zE_ubEbw/VxVUloWLyNI/AAAAAAAAAEo/4GWQo3aogOcD02KMVax0CXmn3NGrI6-SACL0B/w1832-h696-no/Backend%2BAPIs.tiff)
-
+By clicking each Api you can test function separately. For example the following page is the result of ‘’’get_user_games’’’:
+![2](https://lh5.googleusercontent.com/-M4ufWXuYsnM/VxVWP0PGpSI/AAAAAAAAAFU/WT5pfug_HxgcRgBZzBItiXlAefF_iaLowCL0B/w1830-h1004-no/get_user_games.tiff)
