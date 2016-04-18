@@ -52,9 +52,26 @@ class Game(ndb.Model):
     history = ndb.PickleProperty(required=True, default=[])
 
     @classmethod
+    def new_game(cls,user,attempts):
+	"""Creates and returns a new game"""
+	# List of words to choose ad the original word. This list can be external library or given words list.
+        words_to_guess = ["beautiful","extraordinary","spectacular","mountain","fabulous","wonderful"]
+        # pick a number to choose from the words
+        number = random.randint(0,5)
+        word_to_guess = str(words_to_guess[number])
+        attempts_default = 9
+        game = Game(user=user,
+                    word_to_guess=word_to_guess,
+                    letters_guessed='',
+                    history=[],
+                    attempts_allowed=attempts_default,
+                    attempts_remaining=attempts_default,
+                    game_over=False)
+        game.put()
+	return game
     def to_game_form(self,message):
         """Returns a GameForm representation of the Game"""
-	return GameForm(urlsafe_key=self.key.urlsafe(),
+	return GameForm(urlsafe_key = self.key.urlsafe(),
 			user_name = self.user.get().name,
 			letters_guessed = self.letters_guessed,
 			attempts_remaining = self.attempts_remaining,
@@ -83,7 +100,6 @@ class Score(ndb.Model):
     won = ndb.BooleanProperty(required=True)
     guesses = ndb.IntegerProperty(required=True)
     
-    @classmethod
     def to_score_form(self):
         return ScoreForm(user_name=self.user.get().name, won=self.won,
                          date=str(self.date), guesses=self.guesses)

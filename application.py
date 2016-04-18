@@ -70,22 +70,9 @@ class HangmanApi(remote.Service):
             raise endpoints.NotFoundException(
                     'A user with that name does not exist!')
         try:
-	    # List of words to choose ad the original word. This list can be external library or given words list.
-	    words_to_guess = ["beautiful","extraordinary","spectacular","mountain","fabulous","wonderful"]
-	    # pick a number to choose from the words
-	    number = random.randint(0,5)
-	    word_to_guess = str(words_to_guess[number])
-	    attempts_default = 9
-	    game = Game(user=user,
-			word_to_guess=word_to_guess,
-			letters_guessed='',
-			history=[],
-			attempts_allowes=attempts,
-			attempts_remaining=attempts,
-			game_over=False) 
-            game.put()
-        except ValueError:
-            raise endpoints.BadRequestException('error message')
+	    game = Game.new_game(user.key,9)
+	except ValueError:
+	    raise endpoints.BadRequestException('error message')
 
         # Use a task queue to update the average attempts remaining.
         # This operation is not needed to complete the creation of a new game
@@ -163,7 +150,7 @@ class HangmanApi(remote.Service):
                       path='user/games',
                       name='get_user_games',
                       http_method='GET')
-    def get_games(self, request):
+    def get_user_games(self, request):
         """Return all games of a user"""
         user = User.query(User.name == request.user_name).get()
         if not user:
@@ -215,7 +202,7 @@ class HangmanApi(remote.Service):
                       http_method='GET')
     def get_user_rankings(self, request):
         """Return graded user user_rankings based on win ratios"""
-        users =User.query(User.total_played > 0).fetch()
+        users =User.query(User.total_games_played > 0).fetch()
         users = sorted(users, key=lambda x: x.win_percentage, reverse=True)
         return UserForms(items=[user.to_user_form() for user in users])
 
