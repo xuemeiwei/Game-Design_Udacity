@@ -103,14 +103,17 @@ class HangmanApi(remote.Service):
           game.end_game(True)
           return game.to_game_form('You won!')
         if request.guess in game.word_to_guess:
-          msg = 'Your letter is in the secret word'
-          game.history.append((request.guess," found"))
-          """ append the move to the game history"""
+            msg = ''
+            for i in range(len(game.word_to_guess)):
+                if request.guess==game.word_to_guess[i]:
+                    msg = msg+'\n Your letter is the {}th word of the secret word'.format(i+1)
+            game.history.append((request.guess," found"))
         else:
-          game.attempts_remaining -= 1
-          game.history.append((request.guess,"not in word"))
-          """ Append the move to the game history"""
-          msg = 'The letter you guessed is not there!'
+            game.attempts_remaining -= 1
+            game.history.append((request.guess,"not in word"))
+            """ Append the move to the game history"""
+            msg = 'The letter you guessed is not there!'
+
         if game.attempts_remaining ==0:
           game.end_game(False)
           return game.to_game_form(msg + ' Game over!')
@@ -188,8 +191,7 @@ class HangmanApi(remote.Service):
         user = User.query(User.name == request.user_name).get()
         if not user:
           raise endpoints.NotFoundException('User not found')
-        games = Game.query(Game.user == user.key).\
-        filter(Game.game_over == False)
+        games = Game.query(Game.user == user.key).filter(Game.game_over == False)
         return GameForms(items=[game.to_game_form("active game") for game in games])
 
     @endpoints.method(response_message=UserForms,
