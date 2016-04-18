@@ -26,7 +26,7 @@ MAKE_MOVE_REQUEST = endpoints.ResourceContainer(MakeMoveForm,
                                                                                     urlsafe_game_key=messages.StringField(1),)
 USER_REQUEST = endpoints.ResourceContainer(user_name=messages.StringField(1),
                                                                            email=messages.StringField(2))
-GET_HIGHEST_SCORES_REQUEST = endpoints.ResourceContainer(results= messages.IntegerField(1))
+GET_HIGH_SCORES_REQUEST = endpoints.ResourceContainer(results= messages.IntegerField(1))
 MEMCACHE_MOVES_REMAINING = 'MOVES_REMAINING'
 
 @endpoints.api(name='hangman', version='v1', audiences=[ANDROID_AUDIENCE],
@@ -168,12 +168,12 @@ class HangmanApi(remote.Service):
         """Return all scores in the scoreborad"""
         return ScoreForms(items=[score.to_score_form() for score in Score.query()])
 
-    @endpoints.method(request_message=GET_HIGHEST_SCORES_REQUEST,
+    @endpoints.method(request_message=GET_HIGH_SCORES_REQUEST,
                       response_message=ScoreForms,
                       path='high_scores',
-                      name='get_highest_scores',
+                      name='get_high_scores',
                       http_method='GET')
-    def get_highest_scores(self, request):
+    def get_high_scores(self, request):
         """Return the scores graded from highest to lowest"""
         Scores =Score.query(Score.won == True).order(Score.guesses).fetch(request.results)
         return ScoreForms(items=[score.to_score_form() for score in Scores])

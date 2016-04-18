@@ -53,8 +53,8 @@ class Game(ndb.Model):
 
     @classmethod
     def new_game(cls,user,attempts):
-	"""Creates and returns a new game"""
-	# List of words to choose ad the original word. This list can be external library or given words list.
+        """Creates and returns a new game"""
+        # List of words to choose ad the original word. This list can be external library or given words list.
         words_to_guess = ["beautiful","extraordinary","spectacular","mountain","fabulous","wonderful"]
         # pick a number to choose from the words
         number = random.randint(0,5)
@@ -68,10 +68,10 @@ class Game(ndb.Model):
                     attempts_remaining=attempts_default,
                     game_over=False)
         game.put()
-	return game
+        return game
     def to_game_form(self,message):
         """Returns a GameForm representation of the Game"""
-	return GameForm(urlsafe_key = self.key.urlsafe(),
+        return GameForm(urlsafe_key = self.key.urlsafe(),
 			user_name = self.user.get().name,
 			letters_guessed = self.letters_guessed,
 			attempts_remaining = self.attempts_remaining,
