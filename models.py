@@ -16,10 +16,10 @@ class User(ndb.Model):
     total_games_played = ndb.IntegerProperty(default=0)
 
     """Adding an auto calculated field"""
-    @classmethod
+    @property
     def win_percentage(self):
         if self.total_games_played >0:
-            return float(self.wins)/float(self.total_played)
+            return float(self.wins)/float(self.total_games_played)
         else:
             return 0
     def to_user_form(self):
@@ -27,7 +27,7 @@ class User(ndb.Model):
         return UserForm(name=self.name,
                         email=self.email,
                         wins=self.wins,
-                        total_games_played=self.total_played,
+                        total_games_played=self.total_games_played,
                         win_percentage=self.win_percentage)
     def add_win(self):
         """records the victory to the player"""
@@ -150,7 +150,7 @@ class UserForm(messages.Message):
     name = messages.StringField(1, required=True)
     email = messages.StringField(2)
     wins = messages.IntegerField(3, required=True)
-    total_played = messages.IntegerField(4, required=True)
+    total_games_played = messages.IntegerField(4, required=True)
     win_percentage = messages.FloatField(5, required=True)
 
 class UserForms(messages.Message):
