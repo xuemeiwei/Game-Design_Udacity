@@ -1,5 +1,5 @@
 #Game-Design_Udacity
-This is the fourth project for Full Nanodegree in which the game of hangman is designed.
+This is the fourth project for Full Nanodegree in which the game of Hangman is designed. Different users can play several games at the same time. To rank the users a scoring system is used. The score of each user is computed as the win ratio, namely the percentage of wins against total games the user played.
 
 In this project, the cloud-based APIs are developed to support a provided conference organization application that exists on the web as well as a native Android application. Google Cloud Endpoints with Python is used to realize the API backend on Google APP Engine.
 
@@ -33,6 +33,9 @@ given time. Each game can be retrieved or played by using the path parameter
  - cron.yaml: Cronjob configuration.
  - main.py: Handler for taskqueue handler.
  - models.py: Entity and message definitions including helper methods.
+ - User.py: Definition of User, UserForm, UserForms
+ - Game.py: Definition of Game, GameForm, GameForms
+ - Score.py: Definition of Score, ScoreForm, ScoreForms
  - utils.py: Helper function for retrieving ndb.Models by urlsafe Key string.
 
 ##Endpoints Included:
@@ -42,7 +45,8 @@ given time. Each game can be retrieved or played by using the path parameter
     - Parameters: user_name, email (optional)
     - Returns: Message confirming creation of the User.
     - Description: Creates a new User. user_name provided must be unique. Will 
-    raise a ConflictException if a user with that user_name already exists.
+    raise a ConflictException if a user with that user_name already exists and 
+    also raise exception when email is invalid.
     
  - **new_game**
     - Path: 'game'
@@ -65,6 +69,7 @@ given time. Each game can be retrieved or played by using the path parameter
     - Path: 'game/{urlsafe_game_key}'
     - Method: PUT
     - Parameters: urlsafe_game_key, guess
+    guess should be one letter or a word of the same length with the answer
     - Returns: GameForm with new state of game.
     - Description: Accepts a 'guess' and returns the updated state of the game.
     If this causes a game to end, a corresponding Score entity will be created.
@@ -103,7 +108,7 @@ given time. Each game can be retrieved or played by using the path parameter
     - Path: 'game/{urlsafe_game_key}',
     - Method :DELETE
     - Parameters: urlsafe_game_key
-    - Returns : All games from one user that are active and not finished
+    - Returns : Confirmation message of successful deletion
     - This endpoint allows users to cancel a game in progress, completed games cannot be removed.
     
  - **get_high_scores**
@@ -117,7 +122,7 @@ given time. Each game can be retrieved or played by using the path parameter
     - Method :GET
     - Parameters: none 
     - Returns : Players that have played games displayed by ranking (win ratio)
-    - Come up with a method for ranking the performance of each player.
+    Get the rankings of users according to their scores
       
  - **get_game_history**
     - Path: game/{urlsafe_game_key}/history

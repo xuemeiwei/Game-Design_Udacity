@@ -1,19 +1,15 @@
-"""api.py - Create and configure the Game API exposing the resources.
-This can also contain game logic. For more complex games it would be wise to
-move game logic to another file. Ideally the API will be simple, concerned
-primarily with communication to/from the API's users."""
+"""application.py - Create and configure the Game API exposing the resources.
+This file contains game logic including 'create_user', 'new_game', 'make_move',
+'get_game', 'get_game_history', 'cancel_game', 'get_scores', 'get_high_scores',
+'get_user_games', 'get_average_attempts', '_cache_average_attempts'.
+"""
 
-import random
-import logging
+
 import endpoints
 from protorpc import remote, messages
 from google.appengine.api import memcache
-from google.appengine.ext import ndb
 from google.appengine.api import taskqueue
-
-from models import User, Game, Score
-from models import StringMessage, NewGameForm, GameForm, MakeMoveForm,\
-    ScoreForms,GameForms, UserForm, UserForms
+from models import *
 from utils import get_by_urlsafe
 import re
 from settings import *
@@ -22,10 +18,8 @@ EMAIL_SCOPE = endpoints.EMAIL_SCOPE
 API_EXPLORER_CLIENT_ID = endpoints.API_EXPLORER_CLIENT_ID
 NEW_GAME_REQUEST = endpoints.ResourceContainer(NewGameForm)
 GET_GAME_REQUEST = endpoints.ResourceContainer(urlsafe_game_key=messages.StringField(1),)
-MAKE_MOVE_REQUEST = endpoints.ResourceContainer(MakeMoveForm,
-                                                                                    urlsafe_game_key=messages.StringField(1),)
-USER_REQUEST = endpoints.ResourceContainer(user_name=messages.StringField(1),
-                                                                           email=messages.StringField(2))
+MAKE_MOVE_REQUEST = endpoints.ResourceContainer(MakeMoveForm, urlsafe_game_key=messages.StringField(1),)
+USER_REQUEST = endpoints.ResourceContainer(user_name=messages.StringField(1), email=messages.StringField(2))
 GET_HIGH_SCORES_REQUEST = endpoints.ResourceContainer(results= messages.IntegerField(1))
 MEMCACHE_MOVES_REMAINING = 'MOVES_REMAINING'
 
@@ -43,18 +37,15 @@ class HangmanApi(remote.Service):
     def create_user(self, request):
         """Create a User which requires a unique username"""
         if User.query(User.name == request.user_name).get():
-            raise endpoints.ConflictException(
-                    'A User with that name already exists!')
-        """ import function from regex used to check email validity"""
-        user = User(name=request.user_name, email=request.email)
-        match = re.match('^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$',request.email)
-        
-        if match == None:
-            print('Invalid email entry')
-            raise ValueError('Bad Syntax')
+            raise endpoints.ConflictException('A User with that name already exists!')
+        """ Import function from regex used to check email validity"""
+        user = User(name=request.user_name)
+        if request.email:
+            match = re.match('^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$',request.email)
+            if match == None:
+                raise ValueError('Bad Syntax')
         user.put()
-        return StringMessage(message='User {} created!'.format(
-                request.user_name))
+        return StringMessage(message='User {} created!'.format(request.user_name))
 
     @endpoints.method(request_message=NEW_GAME_REQUEST,
                       response_message=GameForm,
@@ -76,8 +67,10 @@ class HangmanApi(remote.Service):
         # This operation is not needed to complete the creation of a new game
         # so it is performed out of sequence.
         taskqueue.add(url='/tasks/cache_average_attempts')
-        return game.to_game_form('Good luck playing Hangman!')
-
+        game.letters_right_position = ''
+        for i in range(len(game.word_to_guess)):
+            game.letters_right_position += '_ '
+        return game.to_game_form('Good luck playing Hangman!'+game.letters_right_position)
     
     @endpoints.method(request_message=MAKE_MOVE_REQUEST,
                       response_message=GameForm,
@@ -89,37 +82,50 @@ class HangmanApi(remote.Service):
         game = get_by_urlsafe(request.urlsafe_game_key, Game)
         if game.game_over:
             return game.to_form('Game already over!')
-        """Check letter has not already been guessed"""
-        if request.guess in game.letters_guessed:
-            raise endpoints.BadRequestException('Repeated letter!')
-        game.letters_guessed += request.guess
-        hangmanprogress = ''
-        failed = 0
-        """Check the letter you guesses is right or not"""
-        for char in game.word_to_guess:
-          if char not in game.letters_guessed:
-           failed +=1
-        if failed == 0:
-          game.end_game(True)
-          return game.to_game_form('You won!')
-        if request.guess in game.word_to_guess:
-            msg = ''
-            for i in range(len(game.word_to_guess)):
-                if request.guess==game.word_to_guess[i]:
-                    msg = msg+'\n Your letter is the {}th word of the secret word'.format(i+1)
-            game.history.append((request.guess," found"))
+        """Check validity of the guess"""
+        if not request.guess.isalpha():
+            raise endpoints.BadRequestException('Invalid guess!')
+        if len(request.guess)!=len(game.word_to_guess) and len(request.guess)!=1 :
+            raise endpoints.BadRequestException('Invalid guess!')
+        """Try to Guess the whole word"""
+        if len(request.guess)==len(game.word_to_guess):
+            if request.guess == game.word_to_guess:
+                game.history.append(request.guess+" is the correct word")
+                game.end_game(True)
+                return game.to_game_form('You won!')
+            else:
+                game.history.append(request.guess+ "is the wrong word")
+                game.attempts_remaining -= 1
+            """Guess the word letter by letter"""
         else:
-            game.attempts_remaining -= 1
-            game.history.append((request.guess,"not in word"))
-            """ Append the move to the game history"""
-            msg = 'The letter you guessed is not there!'
-
+            if request.guess in game.letters_guessed:
+                raise endpoints.BadRequestException('Repeated letter!')
+            game.letters_guessed += request.guess
+            """Check the letter is in the correct letter or not"""
+            if request.guess in game.word_to_guess:
+                failed = 0;
+                game.letters_right_position = '';
+                for char in game.word_to_guess:
+                    if char in game.letters_guessed:
+                        game.letters_right_position += char
+                    else:
+                        game.letters_right_position += '_ '
+                        failed += 1
+                game.history.append(request.guess+" found")
+                if failed == 0:
+                    game.end_game(True)
+                    return game.to_game_form('You won!')
+            else:
+                game.attempts_remaining -= 1
+                game.history.append(request.guess+" is not in word")
+        
+        """Check it's the end of game or not"""
         if game.attempts_remaining ==0:
-          game.end_game(False)
-          return game.to_game_form(msg + ' Game over!')
+            game.end_game(False)
+            return game.to_game_form('Letters you already got are '+game.letters_right_position + ' But game is over!')
         else:
-          game.put()
-        return game.to_game_form(msg)
+            game.put()
+        return game. to_game_form("The letters you already got are "+game.letters_right_position)
 
     @endpoints.method(request_message=GET_GAME_REQUEST,
                       response_message=GameForm,

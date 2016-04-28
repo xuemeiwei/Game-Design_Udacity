@@ -1,14 +1,17 @@
 Hangman Design
 
-This project is based on the framework of FSND-P4-Design-A-Game. In this project the word guess game called Hangman is designed. In Hangman game the word to guess is represented by a row of dashes, representing each letter of the word. If the guessing player suggests a letter which occurs in the word, the other player writes it in all its correct positions. If the suggested letter or number does not occur in the word, the other player draws one element of a hanged man stick figure as a tally mark. The player guessing the word may, at any time, attempt to guess the whole word. If the word is correct, the game is over and the guesser wins. 
+In this project the word guess game called Hangman is designed. Mainly three entities are defined in this project, namely User, Game and Score. Here the entity “Score” is defined mainly to get the rankings of User. The parameters used in game are mainly defined in the entity “Game” as following:
+ 
+1. word_to_guess: the original which the user needs to guess
+2. letters_guessed: the letters the user already guessed
+3. letters_right_position: put the letters already guessed correctly in their right position. Help the user to guess the whole word.
+4. attempts_remaining: remaining attempts that the user has in the game. Game over if it equals 0.
+5. history: all the guesses the user has made
+6. game_over: status of the game
+7. attempts_allowed: the total attempts the user can make. Default value is 9. It can be changed to adjust different game difficulty level.
 
-The details about Hangman can be found on wikipedia:
-https://en.wikipedia.org/wiki/Hangman_(game)
+When a new game is created the word to guess is created by randomly chosen from some the word library. Here the library of the words is a given list containing just several words and the word to guess is randomly chose from this list. The library can also be a very large dictionary imported outside. 
 
-Same as the framework of FSND-P4-Design-A-Game, three Classes, namely User, Game and Score are defined in the models.py. However in order to sort the scores of different users, two more properties of User are defined which are wins and total_games_played. The function of “get_user_rankings” is based on the win percentage of each user and the percentage is computed as wins/total_games_played. 
+The action of guess is implemented in the function of “make_move”. The process of the guess is as follows:
+Each time the user can only guess a single letter or the whole word otherwise it would raise error. When the guess is a single letter, the api will tell the user whether the guess is right or not. If the guess is right the api will put the letter in its right position in the original word. Otherwise attempts_remaining will decrease by 1. If the original answer is in the letters already guessed, the status of the game will change to “Game Over” and the user wins. When the user guess the whole word and if the guess is the exact word, the game is over and the user wins. If not, attempts_remaining will decrease by 1. When attempts_remaining equals zero, the status of the game will change to “Game Over” and the user loses.
 
-When a new game is created the word to guess is created. Here the library of the words is a given list containing just several words and the word to guess is randomly chose from this list. The library can also be a very large dictionary imported outside. 
-
-The main feature of the game is to guess a word letter by letter which is mainly displayed in the “make_move” function in application.py. If the letter given by the user is correct the positions of letter will be given in the message which can help the user to guess the following letters. Otherwise it will tell the user that the letter is not in the answer.
-
-The trade-off between the designed game and original game is that the player can only guess the word letter by letter instead of the whole word. So even the player wants to give the guess of the whole word he still needs to guess letter by letter.
